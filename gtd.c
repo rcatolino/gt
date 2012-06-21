@@ -205,6 +205,8 @@ int read_event(int sockfd){
     }
   }
   buffer[MAX_SIZE]='\0';
+  printf("buffer len : %lu\n",strlen(buffer));
+  printf("event %c\n",buffer[0]);
 
   if(buffer[0]=='s'){
     //add a dirname-path pair to storage;

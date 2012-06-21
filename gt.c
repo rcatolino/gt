@@ -97,11 +97,13 @@ void push_event(char event, const char * path){
   }
   buff[0]=event;
   size=strlen(path);
-  size= size>MAX_SIZE-1? MAX_SIZE-1:size;
+  size=size>MAX_SIZE-1 ? MAX_SIZE-1:size;
   memcpy(buff+1,path,size);
-  buff[size+1]='\0';
+  size++;
+  buff[size]='\0';
   printf("push_event: sending %s\n", buff);
-  ret=send(sockfd, path, size, 0);
+  printf("buffer len : %lu, sending %d bytes\n",strlen(buff),size+1);
+  ret=send(sockfd, buff, size+1, 0);
   if(ret==-1){
     perror("send");
   }
