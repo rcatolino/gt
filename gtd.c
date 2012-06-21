@@ -157,7 +157,7 @@ int store_event(const char * buff){
   char * dirname;
   const char * path;
   path=buff;
-  dirname=strrchr(path,'/');
+  dirname=strrchr(path,'/')+1;
   if(dirname==NULL){
     printf("store_event: invalid path\n");
     return -1;

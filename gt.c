@@ -7,6 +7,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>
+#include <limits.h>
 #include <errno.h>
 
 #define SOCKET "/tmp/gtd.socket"
@@ -80,7 +81,7 @@ int isdir(const char * path){
   return 0;
 }
 
-void push_event(char event, const char * path){
+void push_event(char event, const char * path, int relative){
   int sockfd;
   int ret;
   int size;
@@ -95,12 +96,34 @@ void push_event(char event, const char * path){
     close(sockfd);
     return;
   }
+
   buff[0]=event;
   size=strlen(path);
   size=size>MAX_SIZE-1 ? MAX_SIZE-1:size;
-  memcpy(buff+1,path,size);
-  size++;
-  buff[size]='\0';
+  if (relative) {
+    /*
+    char * pwd = getenv("PWD");
+    int pwd_size;
+    if (!pwd) {
+      printf("No curent working directory\n");
+      return;
+    }
+    pwd_size = strlen(pwd);
+    if (pwd_size > (MAX_SIZE-size-1)){
+      printf("absolute path too long\n");
+      return;
+    }
+    memcpy(buff+1,pwd,pwd_size);
+    buff[1+pwd_size]='/';
+    memcpy(buff+2+pwd_size,path,size);
+    size+=1+pwd_size;
+    */
+    realpath(path,buff+1);
+    size = strlen(buff)+1;
+  } else {
+    size++;
+    memcpy(buff+1,path,size);
+  }
   printf("push_event: sending %s\n", buff);
   printf("buffer len : %lu, sending %d bytes\n",strlen(buff),size+1);
   ret=send(sockfd, buff, size+1, 0);
@@ -117,7 +140,7 @@ int handle(const char * path){
   }
   if (isdir(path)==1){
     printf("pushing store event : %s\n",path);
-    push_event('s',path);
+    push_event('s',path,1);
     return 0;
   }else{
     printf("pushing find event : %s\n",path);

@@ -2,7 +2,7 @@
 #define GTD_H_
 
 #define SOCKET "/tmp/gtd.socket"
-#define MAX_SIZE 60
+#define MAX_SIZE 100
 #define DETACHED 1
 #define ATTACHED 0
 struct entry{
