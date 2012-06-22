@@ -66,6 +66,7 @@ void attach(struct entry * new_entry, int key){
 
 struct entry * find_entry(const char *dirname, int key){
   struct entry * current;
+  printf("find_entry %s, key: %d\n",dirname, key);
   if (htable[key]!=NULL){
     current=htable[key];
     if (strcmp(dirname,current->dirname)==0){
@@ -77,6 +78,7 @@ struct entry * find_entry(const char *dirname, int key){
       }
     }
   }
+  printf("find_entry: no such path\n");
   return NULL;
 }
 
@@ -179,10 +181,12 @@ int store_event(const char * buff){
 const char * find_event(const char * buff){
   struct entry * src;
   int key=hash(buff);
+  printf("find_event: %s\n",buff);
   src=find_entry(buff, key);
   if (src==NULL){
     return NULL;
   } else {
+    printf("find_event: found path associated with dirname, %s\n",src->first_candidate->path);
     return src->first_candidate->path;
   }
 }
@@ -203,6 +207,7 @@ int read_event(int sockfd){
         return -1;
       }
     }
+    data_read+=ret;
   }
   buffer[MAX_SIZE]='\0';
   printf("buffer len : %lu\n",strlen(buffer));
@@ -217,9 +222,14 @@ int read_event(int sockfd){
     path=find_event(buffer+1);
     if(path==NULL){
       send(sockfd,"\n",2,0);
-    } else if(send(sockfd,path,strlen(path)+1,0)==-1){
-      perror("send");
-      return -1;
+      printf("read_event: no path corresponding to dirname\n");
+    } else {
+      if(send(sockfd,path,strlen(path)+1,0)==-1){
+        perror("send");
+        return -1;
+      }
+      ret = recv(sockfd,buffer,2,0); //Wait for connection closed
+      printf("read_event: connection closed, ret = %d\n", ret);
     }
   }else{
     printf("read_event: received invalid message : %s\n",buffer);

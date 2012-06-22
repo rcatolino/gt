@@ -81,7 +81,7 @@ int isdir(const char * path){
   return 0;
 }
 
-void push_event(char event, const char * path, int relative){
+void push_event(char event, const char * path, int relative) {
   int sockfd;
   int ret;
   int size;
@@ -119,7 +119,7 @@ void push_event(char event, const char * path, int relative){
     size+=1+pwd_size;
     */
     realpath(path,buff+1);
-    size = strlen(buff)+1;
+    size = strlen(buff);
   } else {
     size++;
     memcpy(buff+1,path,size);
@@ -129,6 +129,40 @@ void push_event(char event, const char * path, int relative){
   ret=send(sockfd, buff, size+1, 0);
   if(ret==-1){
     perror("send");
+    return;
+  }
+  if (event == 's'){
+    return; 
+  }
+  if (event == 'f'){
+    int data_read=recv(sockfd,buff,MAX_SIZE,0);
+    while(data_read<MAX_SIZE){
+      ret=recv(sockfd,buff+data_read,MAX_SIZE-data_read,MSG_DONTWAIT);
+      if (ret==-1){
+        if (errno==EAGAIN || errno==EWOULDBLOCK){
+          break;
+        } else {
+          perror("recv");
+          return;
+        }
+      } else if (ret == 0){
+        printf("recv: connection shut down by server\n");
+        return;
+      }
+      data_read+=ret;
+    }
+    if (data_read < 0) {
+      perror("recv:");
+      return;
+    }
+    close(sockfd);
+    buff[data_read]='\0';
+    printf("path received: %s, data_read: %d\n", buff, data_read);
+    if (buff[0] == '\n') {
+      printf("no path found in historic\n");
+      return;
+    }
+    fprintf(stdout,"%s\n",buff);
   }
 }
 
@@ -144,8 +178,8 @@ int handle(const char * path){
     return 0;
   }else{
     printf("pushing find event : %s\n",path);
+    push_event('f',path,0);
   }
-  printf("%s",path);
   return 0;
 }
 
