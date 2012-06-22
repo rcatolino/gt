@@ -5,6 +5,14 @@
 #define MAX_SIZE 100
 #define DETACHED 1
 #define ATTACHED 0
+
+#ifdef DEBUG
+  #define printd(...) fprintf(stderr,__VA_ARGS__)
+  #define perrord(a) fprintf(stderr,a)
+#else
+  #define printd(...)
+  #define perrord(a)
+#endif
 struct entry{
   struct entry* prev;
   struct entry* next;

@@ -66,7 +66,7 @@ void attach(struct entry * new_entry, int key){
 
 struct entry * find_entry(const char *dirname, int key){
   struct entry * current;
-  printf("find_entry %s, key: %d\n",dirname, key);
+  printd("find_entry %s, key: %d\n",dirname, key);
   if (htable[key]!=NULL){
     current=htable[key];
     if (strcmp(dirname,current->dirname)==0){
@@ -78,7 +78,7 @@ struct entry * find_entry(const char *dirname, int key){
       }
     }
   }
-  printf("find_entry: no such path\n");
+  printd("find_entry: no such path\n");
   return NULL;
 }
 
@@ -161,7 +161,7 @@ int store_event(const char * buff){
   path=buff;
   dirname=strrchr(path,'/')+1;
   if(dirname==NULL){
-    printf("store_event: invalid path\n");
+    printd("store_event: invalid path\n");
     return -1;
   }
   //ignore all trailing '/' characters:
@@ -169,11 +169,11 @@ int store_event(const char * buff){
     dirname[0]='\0';
     dirname=strrchr(path,'/');
     if(dirname==NULL){
-      printf("store_event: invalid path\n");
+      printd("store_event: invalid path\n");
       return -1;
     }
   }
-  printf("store_event: dirname=%s, path=%s\n",dirname,path);
+  printd("store_event: dirname=%s, path=%s\n",dirname,path);
   update_entry(path,dirname);
   return 0; 
 }
@@ -181,12 +181,12 @@ int store_event(const char * buff){
 const char * find_event(const char * buff){
   struct entry * src;
   int key=hash(buff);
-  printf("find_event: %s\n",buff);
+  printd("find_event: %s\n",buff);
   src=find_entry(buff, key);
   if (src==NULL){
     return NULL;
   } else {
-    printf("find_event: found path associated with dirname, %s\n",src->first_candidate->path);
+    printd("find_event: found path associated with dirname, %s\n",src->first_candidate->path);
     return src->first_candidate->path;
   }
 }
@@ -210,8 +210,8 @@ int read_event(int sockfd){
     data_read+=ret;
   }
   buffer[MAX_SIZE]='\0';
-  printf("buffer len : %lu\n",strlen(buffer));
-  printf("event %c\n",buffer[0]);
+  printd("buffer len : %lu\n",strlen(buffer));
+  printd("event %c\n",buffer[0]);
 
   if(buffer[0]=='s'){
     //add a dirname-path pair to storage;
@@ -222,17 +222,17 @@ int read_event(int sockfd){
     path=find_event(buffer+1);
     if(path==NULL){
       send(sockfd,"\n",2,0);
-      printf("read_event: no path corresponding to dirname\n");
+      printd("read_event: no path corresponding to dirname\n");
     } else {
       if(send(sockfd,path,strlen(path)+1,0)==-1){
         perror("send");
         return -1;
       }
       ret = recv(sockfd,buffer,2,0); //Wait for connection closed
-      printf("read_event: connection closed, ret = %d\n", ret);
+      printd("read_event: connection closed, ret = %d\n", ret);
     }
   }else{
-    printf("read_event: received invalid message : %s\n",buffer);
+    printd("read_event: received invalid message : %s\n",buffer);
     return -1;
   }
   return 0;
@@ -253,7 +253,7 @@ int pop_event(){
 }
 
 void end(int signb){
-  printf("end: removing resources\n");
+  printd("end: removing resources\n");
   unlink(SOCKET);
   close(socklisten);
   exit(0);

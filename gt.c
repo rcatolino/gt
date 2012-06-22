@@ -9,16 +9,13 @@
 #include <sys/un.h>
 #include <limits.h>
 #include <errno.h>
-
-#define SOCKET "/tmp/gtd.socket"
-#define MAX_SIZE 60
+#include "gtd.h"
 
 int move(const char *path){
   int chret=0;
   int sysret=0;
-  const char * err;
   if (!path){
-    //fprintf(stderr,"gt: no path specified\n");
+    printd("gt: no path specified\n");
     return 0;
   }
   switch(path[0]){
@@ -30,8 +27,11 @@ int move(const char *path){
       break;
   }
   if(chret==-1 || sysret==-1){
+#ifdef DEBUG
+    const char * err;
     err = strerror(errno);
-    fprintf(stderr,"gt: %s\n",err);
+#endif
+    printd("gt: %s\n",err);
     return 1;
   }
   return 0;
@@ -68,20 +68,20 @@ int isdir(const char * path){
   ret=open(path,O_RDWR);
   if (ret!=-1){
     close(ret);
-    printf("isdir \"%s\": file open, not a directory\n",path);
+    printd("isdir \"%s\": file open, not a directory\n",path);
     return 0;
   } else {
     if (errno==EISDIR){
-      printf("isdir \"%s\": error EISDIR, file is a directory\n",path);
+      printd("isdir \"%s\": error EISDIR, file is a directory\n",path);
       return 1;
     }
-    perror("isdir");
+    perrord("isdir");
     return 0;
   }
   return 0;
 }
 
-void push_event(char event, const char * path, int relative) {
+int push_event(char event, const char * path, int relative) {
   int sockfd;
   int ret;
   int size;
@@ -92,9 +92,9 @@ void push_event(char event, const char * path, int relative) {
   sockfd=socket(AF_UNIX, SOCK_STREAM,0);
   ret=connect(sockfd, (struct sockaddr *)&server, sizeof(struct sockaddr_un));
   if(ret==-10){
-    perror("connect");
+    perrord("connect");
     close(sockfd);
-    return;
+    return -1;
   }
 
   buff[0]=event;
@@ -105,12 +105,12 @@ void push_event(char event, const char * path, int relative) {
     char * pwd = getenv("PWD");
     int pwd_size;
     if (!pwd) {
-      printf("No curent working directory\n");
+      printd("No curent working directory\n");
       return;
     }
     pwd_size = strlen(pwd);
     if (pwd_size > (MAX_SIZE-size-1)){
-      printf("absolute path too long\n");
+      printd("absolute path too long\n");
       return;
     }
     memcpy(buff+1,pwd,pwd_size);
@@ -124,17 +124,14 @@ void push_event(char event, const char * path, int relative) {
     size++;
     memcpy(buff+1,path,size);
   }
-  printf("push_event: sending %s\n", buff);
-  printf("buffer len : %lu, sending %d bytes\n",strlen(buff),size+1);
+  printd("push_event: sending %s\n", buff);
+  printd("buffer len : %lu, sending %d bytes\n",strlen(buff),size+1);
   ret=send(sockfd, buff, size+1, 0);
   if(ret==-1){
-    perror("send");
-    return;
+    perrord("send");
+    return -1;
   }
-  if (event == 's'){
-    return; 
-  }
-  if (event == 'f'){
+  if (event == 'f') {
     int data_read=recv(sockfd,buff,MAX_SIZE,0);
     while(data_read<MAX_SIZE){
       ret=recv(sockfd,buff+data_read,MAX_SIZE-data_read,MSG_DONTWAIT);
@@ -142,43 +139,51 @@ void push_event(char event, const char * path, int relative) {
         if (errno==EAGAIN || errno==EWOULDBLOCK){
           break;
         } else {
-          perror("recv");
-          return;
+          perrord("recv");
+          return -1;
         }
       } else if (ret == 0){
-        printf("recv: connection shut down by server\n");
-        return;
+        printd("recv: connection shut down by server\n");
+        return -1;
       }
       data_read+=ret;
     }
     if (data_read < 0) {
-      perror("recv:");
-      return;
+      perrord("recv:");
+      return -1;
     }
     close(sockfd);
     buff[data_read]='\0';
-    printf("path received: %s, data_read: %d\n", buff, data_read);
+    printd("path received: %s, data_read: %d\n", buff, data_read);
     if (buff[0] == '\n') {
-      printf("no path found in historic\n");
-      return;
+      printd("no path found in historic\n");
+      return -1;
     }
-    fprintf(stdout,"%s\n",buff);
+    printf("%s\n", buff);
+  } else if (event == 's') {
+    printf("%s\n", path);
   }
+  return 0;
 }
 
 int handle(const char * path){
   if (!path) return 0;
   if (!isrel(path)) {
-    printf("pushing store event : %s\n",path);
+    printd("pushing store event : %s\n",path);
+    printf("%s",path);
     return 0;
   }
-  if (isdir(path)==1){
-    printf("pushing store event : %s\n",path);
-    push_event('s',path,1);
+  if (isdir(path)==1) {
+    printd("pushing store event : %s\n",path);
+    if (push_event('s',path,1) == -1) {
+      printf("%s",path);
+    }
     return 0;
-  }else{
-    printf("pushing find event : %s\n",path);
-    push_event('f',path,0);
+  } else {
+    printd("pushing find event : %s\n",path);
+    if (push_event('f',path,0) == -1) {
+      printf("%s",path);
+    }
   }
   return 0;
 }
@@ -194,7 +199,7 @@ int main(int argc, char *argv[]){
       break;
     default:
       for (i=1; i<argc; i++){
-        printf("%s ",argv[i]);
+        printd("%s ",argv[i]);
       }
   }
   return 0;
