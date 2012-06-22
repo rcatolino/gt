@@ -1,4 +1,5 @@
 #include "gtd.h"
+#include "serial.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>
@@ -25,6 +26,7 @@ struct entry * create_entry(const char * path, const char *dirname){
   new_entry->first_candidate->next=new_entry->first_candidate;
   new_entry->first_candidate->score=1;
   strcpy(new_entry->first_candidate->path,path);
+  dump_entry(new_entry);
   return new_entry;
 }
 
@@ -263,6 +265,8 @@ int init(){
   int ret=0;
   struct sockaddr_un server;
 	struct sigaction act = { .sa_handler=end, .sa_flags = 0, };
+  
+  init_serial();
 
   socklisten=socket(AF_UNIX, SOCK_STREAM,0);
   if (socklisten==-1){
