@@ -1,3 +1,5 @@
+#define DEBUG 1
+
 #include "gtd.h"
 #include "serial.h"
 #include <stdio.h>
@@ -282,6 +284,7 @@ int init(){
     goto outbind;
   }
 
+  chmod(SOCKET, S_IRWXU | S_IRWXG | S_IRWXO);
   ret=listen(socklisten,1);
   if (ret==-1){
     perror("listen");
