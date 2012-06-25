@@ -10,7 +10,6 @@
 #include <limits.h>
 #include <errno.h>
 
-#define DEBUG 1
 #include "gtd.h"
 
 int move(const char *path){
