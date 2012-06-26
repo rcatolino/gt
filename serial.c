@@ -3,9 +3,11 @@
 
 static FILE * hist = NULL;
 
-int init_serial() {
-
-  hist = fopen(HISTFILE, "a+");
+int init_serial(char * mode) {
+  if(hist) {
+    return end_serial();
+  }
+  hist = fopen(HISTFILE, mode);
   if (!hist) {
     perrord("init_serial: fopen:");
     return -1;
@@ -24,6 +26,13 @@ int end_serial() {
   return 0;
 }
 
+int read_next_entry(struct entry * to_fill) {
+  if (!to_fill) {
+    printd("Unallocated buffer\n");
+    return -1;
+  }
+
+}
 void dump_entry(const struct entry * to_dump) {
   struct candidate * c_dump;
   int ret = 0;
@@ -35,12 +44,10 @@ void dump_entry(const struct entry * to_dump) {
   
   c_dump = to_dump->first_candidate;
   ret = fprintf(hist, "%s %s %d ", to_dump->dirname, c_dump->path, c_dump->score);
-  //printd("%s %s %d %d", to_dump->dirname, c_dump->path, c_dump->score, ret);
   if (ret <= 0){
-    perror("fprintf:");
+    perrord("fprintf:");
   }
   for (c_dump = c_dump->next; c_dump != to_dump->first_candidate; c_dump = c_dump->next) {
-    printf("dumping candidate\n");
     fprintf(hist, "%s %d ", c_dump->path, c_dump->score);
   }
   fprintf(hist, "\n");

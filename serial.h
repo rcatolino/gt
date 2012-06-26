@@ -7,7 +7,8 @@
 #define DEBUG 1 //Must be defined before #include "gtd.h"
 #include "gtd.h"
 
-void dump_entry(const struct entry *);
+int read_next_entry(struct entry * to_fill) {
+void dump_entry(const struct entry * to_dump);
 int init_serial();
 int end_serial();
 

@@ -13,8 +13,9 @@
 #include <sys/un.h>
 #include <sys/stat.h>
 
+#define HTABLE_SIZE 53
 static int socklisten;
-static struct entry *htable[53]={NULL}; //other + Upper case + Lower case
+static struct entry *htable[HTABLE_SIZE]={NULL}; //other + Upper case + Lower case
 
 struct entry * create_entry(const char * path, const char *dirname){
   struct entry *new_entry=malloc(sizeof(struct entry));
@@ -28,7 +29,6 @@ struct entry * create_entry(const char * path, const char *dirname){
   new_entry->first_candidate->next=new_entry->first_candidate;
   new_entry->first_candidate->score=1;
   strcpy(new_entry->first_candidate->path,path);
-  dump_entry(new_entry);
   return new_entry;
 }
 
@@ -257,7 +257,16 @@ int pop_event(){
 }
 
 void end(int signb){
+  int i = 0;
+  printd("dumping histfile\n");
+  init_serial("w");
+  for(; i < HTABLE_SIZE; i++) {
+    if(htable[i] != NULL) {
+      dump_entry(htable[i]);
+    }
+  }
   printd("end: removing resources\n");
+  end_serial();
   unlink(SOCKET);
   close(socklisten);
   exit(0);
@@ -268,8 +277,8 @@ int init(){
   struct sockaddr_un server;
 	struct sigaction act = { .sa_handler=end, .sa_flags = 0, };
   
-  init_serial();
-
+  init_serial("r");
+  end_serial();
   socklisten=socket(AF_UNIX, SOCK_STREAM,0);
   if (socklisten==-1){
     perror("socket");
