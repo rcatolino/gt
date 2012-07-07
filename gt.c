@@ -11,6 +11,7 @@
 #include <errno.h>
 
 #include "gtd.h"
+#include "datalist.h"
 
 int move(const char *path){
   int chret=0;

@@ -4,10 +4,9 @@
 //Utilities to serialize entries and candidate under the form :
 //  dirname [path score ]+ \n
 //One entry per line allowed, empty lines and lines beginning with # are ignored.
-#define DEBUG 1 //Must be defined before #include "gtd.h"
-#include "gtd.h"
+#include "datalist.h"
 
-int read_next_entry(struct entry * to_fill) {
+int read_next_entry();
 void dump_entry(const struct entry * to_dump);
 int init_serial();
 int end_serial();

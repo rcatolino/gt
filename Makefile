@@ -1,35 +1,35 @@
 #Variables utilisées :
-CC=gcc 
-LD=gcc 
-CCFLAGS=-Wall 
-EDLFLAGS=
+CC=gcc
+LD=gcc
+CCFLAGS=-Wall -g
+EDLFLAGS=-g
 EXE=gt
 DAEMON=gtd
 
 OBJ=gt.o
-DOBJ=gtd.o serial.o
+DOBJ=gtd.o serial.o datalist.o
 
 LIBS=
 DLIBS=
 all : $(EXE) $(DAEMON)
 
-$(DAEMON): $(DOBJ) 
+$(DAEMON): $(DOBJ)
 	@echo building $<
 	$(LD) -o $(DAEMON) $(EDLFLAGS) $(DOBJ) $(DLIBS)
 	@echo done
 
-$(EXE): $(OBJ) 
+$(EXE): $(OBJ)
 	@echo building $<
 	$(LD) -o $(EXE) $(EDLFLAGS) $(OBJ) $(LIBS)
 	@echo done
 
-%.o : %.c *.h 
+%.o : %.c *.h
 	@echo building $< ...
 	$(CC) $(CCFLAGS) -c $<
 	@echo done
-	
-clean: 
-	@echo -n cleaning repository... 
+
+clean:
+	@echo -n cleaning repository...
 	@rm -f ./$(EXE)
 	@rm -f *.o
 	@rm -f .*.swp
@@ -42,7 +42,7 @@ clean:
 coffee : clean
 	@echo No!
 
-install : 
+install :
 	rm -rf /usr/local/share/gtd
 	mkdir /usr/local/share/gtd
 	cp ./gtd /usr/local/bin/

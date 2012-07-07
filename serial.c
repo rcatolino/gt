@@ -1,5 +1,9 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include "serial.h"
+#include "datalist.h"
+#define DEBUG 1 //Must be defined before #include "gtd.h"
+#include "gtd.h"
 
 static FILE * hist = NULL;
 
@@ -9,7 +13,7 @@ int init_serial(char * mode) {
   }
   hist = fopen(HISTFILE, mode);
   if (!hist) {
-    perrord("init_serial: fopen:");
+    perrord("init_serial: fopen");
     return -1;
   }
 
@@ -18,6 +22,10 @@ int init_serial(char * mode) {
 
 int end_serial() {
 
+  if(!hist) {
+    printd("end_serial: no histfile\n");
+    return -1;
+  }
   if(fclose(hist) != 0) {
     perrord("end_serial: fclose:");
     return -1;
@@ -26,13 +34,19 @@ int end_serial() {
   return 0;
 }
 
-int read_next_entry(struct entry * to_fill) {
-  if (!to_fill) {
-    printd("Unallocated buffer\n");
+int read_next_entry() {
+  char * buff;
+  buff = malloc(1024);
+  if (!buff) {
+    perrord("read_next_entry :");
     return -1;
   }
-
+  fscanf(hist, "%s\n", buff);
+  printd("%s",buff);
+  free(buff);
+  return 0;
 }
+
 void dump_entry(const struct entry * to_dump) {
   struct candidate * c_dump;
   int ret = 0;
@@ -41,7 +55,7 @@ void dump_entry(const struct entry * to_dump) {
     return;
   }
   printd("dumping entry\n");
-  
+
   c_dump = to_dump->first_candidate;
   ret = fprintf(hist, "%s %s %d ", to_dump->dirname, c_dump->path, c_dump->score);
   if (ret <= 0){
