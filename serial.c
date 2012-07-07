@@ -36,14 +36,15 @@ int end_serial() {
 }
 
 int read_next_entry() {
-  char * buff;
-  buff = malloc(1024);
-  if (!buff) {
-    perrord("read_next_entry :");
+  char * buff = NULL;
+  ssize_t length;
+  size_t len = 0;
+  if (!hist){
+    printd("read_next_entry: serial has not been initialized!\n");
     return -1;
   }
-  fscanf(hist, "%s\n", buff);
-  printd("%s",buff);
+  length = getline(&buff, &len, hist);
+  printd("length : %lu, value : %s",length, buff);
   free(buff);
   return 0;
 }
@@ -65,5 +66,5 @@ void dump_entry(const struct entry * to_dump) {
   for (c_dump = c_dump->next; c_dump != to_dump->first_candidate; c_dump = c_dump->next) {
     fprintf(hist, "%s %d ", c_dump->path, c_dump->score);
   }
-  fprintf(hist, "\n");
+  fputc('\n', hist);
 }
