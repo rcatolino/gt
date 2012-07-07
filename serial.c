@@ -30,6 +30,7 @@ int end_serial() {
     perrord("end_serial: fclose:");
     return -1;
   }
+  hist = NULL;
 
   return 0;
 }

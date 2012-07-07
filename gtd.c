@@ -125,11 +125,9 @@ int init(){
   struct sockaddr_un server;
 	struct sigaction act = { .sa_handler=end, .sa_flags = 0, };
 
-  /*
   init_serial("r");
   read_next_entry();
   end_serial();
-  */
   socklisten=socket(AF_UNIX, SOCK_STREAM,0);
   if (socklisten==-1){
     perror("socket");
