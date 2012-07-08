@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "serial.h"
 #include "datalist.h"
 #define DEBUG 1 //Must be defined before #include "gtd.h"
@@ -37,14 +38,34 @@ int end_serial() {
 
 int read_next_entry() {
   char * buff = NULL;
+  char * path;
+  char * dirname;
+  char * remains;
   ssize_t length;
   size_t len = 0;
   if (!hist){
     printd("read_next_entry: serial has not been initialized!\n");
     return -1;
   }
-  length = getline(&buff, &len, hist);
-  printd("length : %lu, value : %s",length, buff);
+  while (1) {
+    length = getline(&buff, &len, hist);
+    if (length == -1) {
+      break;
+    }
+    printd("length : %lu, value : %s",length, buff);
+    dirname = buff;
+    path = strchr(buff,' ');
+    if (!path) {
+      break;
+    }
+    path[0] = '\0';
+    path++;
+    remains = strchr(path,' ');
+    remains[0] = '\0';
+    // TODO: treat remainings candidates
+    printd("path : %s, dirname : %s \n", path, dirname);
+    update_entry(path, dirname);
+  }
   free(buff);
   return 0;
 }
