@@ -2,7 +2,7 @@
 #define DATALIST_H_
 
 #define HTABLE_SIZE 53
-#define MAX_SIZE 100
+#define MAX_SIZE 200
 #define DETACHED 1
 #define ATTACHED 0
 
@@ -38,5 +38,7 @@ void push_candidate(struct entry* current, const char* path);
 struct candidate* find_candidate(const char* path, struct entry* current_e);
 
 struct entry* update_entry(const char* path, const char* dirname);
+
+struct entry* update_entry_score(const char* path, const char* dirname, unsigned long score);
 
 #endif

@@ -4,7 +4,8 @@
 #include <stdio.h>
 
 #define SOCKET "/tmp/gtd.socket"
-#define HISTFILE "/usr/local/share/gtd/gtd.hist"
+#define HISTFILE "gtd.hist"
+#define DEFAULT_PATH "/etc"
 
 #ifdef DEBUG
   #define printd(...) fprintf(stderr,__VA_ARGS__)

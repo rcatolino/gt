@@ -77,13 +77,15 @@ int isdir(const char * path){
       printd("isdir \"%s\": error EISDIR, file is a directory\n",path);
       return 1;
     }
+
     perrord("isdir");
     return 0;
   }
+
   return 0;
 }
 
-int push_event(char event, const char * path, int relative) {
+int push_event(char event, const char *path, int relative) {
   int sockfd;
   int ret;
   int size;
@@ -99,11 +101,19 @@ int push_event(char event, const char * path, int relative) {
     return -1;
   }
 
-  buff[0]=event;
-  size=strlen(path);
-  size=size>MAX_SIZE-1 ? MAX_SIZE-1:size;
-  if (relative) {
+  buff[0] = event;
+  size = strlen(path);
+  size = size>MAX_SIZE-1 ? MAX_SIZE-1 : size;
+
+  if (event == 's') {
+    realpath(path, buff+1);
+    size = strlen(buff);
+  } else {
+    size++;
+    memcpy(buff+1, path, size);
+  }
     /*
+  if (relative) {
     char * pwd = getenv("PWD");
     int pwd_size;
     if (!pwd) {
@@ -119,13 +129,12 @@ int push_event(char event, const char * path, int relative) {
     buff[1+pwd_size]='/';
     memcpy(buff+2+pwd_size,path,size);
     size+=1+pwd_size;
-    */
-    realpath(path,buff+1);
-    size = strlen(buff);
   } else {
     size++;
-    memcpy(buff+1,path,size);
+    memcpy(buff+1, path, size);
   }
+    */
+
   printd("push_event: sending %s\n", buff);
   printd("buffer len : %lu, sending %d bytes\n",strlen(buff),size+1);
   ret=send(sockfd, buff, size+1, 0);
@@ -133,6 +142,7 @@ int push_event(char event, const char * path, int relative) {
     perrord("send");
     return -1;
   }
+
   if (event == 'f') {
     int data_read=recv(sockfd,buff,MAX_SIZE,0);
     while(data_read<MAX_SIZE){
@@ -170,21 +180,25 @@ int push_event(char event, const char * path, int relative) {
 
 int handle(const char * path){
   if (!path) return 0;
+
+  /*
   if (!isrel(path)) {
-    printd("pushing store event : %s\n",path);
-    printf("%s",path);
+    printd("pushing store event : %s\n", path);
+    printf("%s", path);
     return 0;
   }
-  if (isdir(path)==1) {
-    printd("pushing store event : %s\n",path);
-    if (push_event('s',path,1) == -1) {
-      printf("%s",path);
+  */
+
+  if (isdir(path) == 1) {
+    printd("pushing store event : %s\n", path);
+    if (push_event('s', path, 1) == -1) {
+      printf("%s", path);
     }
     return 0;
   } else {
-    printd("pushing find event : %s\n",path);
-    if (push_event('f',path,0) == -1) {
-      printf("%s",path);
+    printd("pushing find event : %s\n", path);
+    if (push_event('f', path, 0) == -1) {
+      printf("%s", path);
     }
   }
   return 0;

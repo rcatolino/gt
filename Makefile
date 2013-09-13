@@ -43,8 +43,8 @@ coffee : clean
 	@echo No!
 
 install :
-	rm -rf /usr/local/share/gtd
-	mkdir /usr/local/share/gtd
+	rm -rf /usr/local/share/gtd/
+	mkdir /usr/local/share/gtd/
 	cp ./gtd /usr/local/bin/
 	cp ./gt /usr/local/bin/
 	echo "You need to manually add an alias in your .zshrc (or equivalent) parse your cd inputs with gt"

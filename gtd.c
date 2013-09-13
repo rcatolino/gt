@@ -35,7 +35,7 @@ int store_event(const char * buff){
     }
   }
   printd("store_event: dirname=%s, path=%s\n",dirname,path);
-  update_entry(path,dirname);
+  update_entry(path, dirname);
   return 0;
 }
 
@@ -57,45 +57,51 @@ int read_event(int sockfd){
   int data_read=0;
   int ret=0;
 
-  data_read=recv(sockfd,buffer,MAX_SIZE,0);
-  while(data_read<MAX_SIZE){
-    ret=recv(sockfd,buffer+data_read,MAX_SIZE-data_read,MSG_DONTWAIT);
-    if (ret==-1){
-      if (errno==EAGAIN || errno==EWOULDBLOCK){
+  data_read = recv(sockfd, buffer, MAX_SIZE, 0);
+  while(data_read < MAX_SIZE){
+    ret = recv(sockfd, buffer+data_read, MAX_SIZE-data_read, MSG_DONTWAIT);
+    if (ret == -1) {
+      if (errno == EAGAIN || errno == EWOULDBLOCK) {
         break;
       } else {
         perror("recv");
         return -1;
       }
+    } else if (ret == 0) {
+      return -1;
     }
+
     data_read+=ret;
   }
+
   buffer[MAX_SIZE]='\0';
   printd("buffer len : %lu\n",strlen(buffer));
   printd("event %c\n",buffer[0]);
 
-  if(buffer[0]=='s'){
+  if (buffer[0] == 's') {
     //add a dirname-path pair to storage;
     store_event(buffer+1);
-  }else if(buffer[0]=='f'){ 
+  } else if (buffer[0] == 'f') {
     const char * path;
     //find a match for a dirname:
     path=find_event(buffer+1);
-    if(path==NULL){
-      send(sockfd,"\n",2,0);
+    if(path == NULL){
+      send(sockfd, "\n", 2, 0);
       printd("read_event: no path corresponding to dirname\n");
     } else {
-      if(send(sockfd,path,strlen(path)+1,0)==-1){
+      if(send(sockfd, path, strlen(path)+1, 0) == -1) {
         perror("send");
         return -1;
       }
-      ret = recv(sockfd,buffer,2,0); //Wait for connection closed
+
+      ret = recv(sockfd, buffer, 2, 0); //Wait for connection closed
       printd("read_event: connection closed, ret = %d\n", ret);
     }
-  }else{
-    printd("read_event: received invalid message : %s\n",buffer);
+  } else {
+    printd("read_event: received invalid message : %s\n", buffer);
     return -1;
   }
+
   return 0;
 }
 

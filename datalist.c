@@ -71,20 +71,22 @@ void attach(struct entry * new_entry, int key){
   new_entry->state=ATTACHED;
 }
 
-struct entry * find_entry(const char *dirname, int key){
-  struct entry * current;
+struct entry *find_entry(const char *dirname, int key){
+  struct entry *current;
   printd("find_entry %s, key: %d\n",dirname, key);
-  if (htable[key]!=NULL){
+  if (htable[key] != NULL){
     current=htable[key];
-    if (strcmp(dirname,current->dirname)==0){
+    if (strcmp(dirname, current->dirname) == 0){
       return current;
     }
-    for (; current->next==htable[key]; current=current->next){
-      if(strcmp(dirname,current->dirname)==0){
+
+    for (; current->next != htable[key]; current = current->next){
+      if(strcmp(dirname, current->dirname) == 0){
         return current;
       }
     }
   }
+
   printd("find_entry: no such path\n");
   return NULL;
 }
@@ -124,41 +126,50 @@ void push_candidate(struct entry *current, const char *path){
   first->prev=new_candidate;
 }
 
-struct candidate * find_candidate(const char *path, struct entry* current_e){
-  struct candidate *current_c=current_e->first_candidate;
-  if (strcmp(path,current_c->path)==0){
+struct candidate *find_candidate(const char *path, struct entry *current_e) {
+  struct candidate *current_c = current_e->first_candidate;
+  if (strcmp(path, current_c->path) == 0){
     return current_c;
   }
-  for (; current_c->next==current_e->first_candidate; current_c=current_c->next){
-    if(strcmp(path,current_c->path)==0){
+
+  for (current_c = current_c->next; current_c != current_e->first_candidate; current_c = current_c->next){
+    if(strcmp(path, current_c->path) == 0){
       return current_c;
     }
   }
+
   return NULL;
 }
 
-struct entry * update_entry(const char *path, const char *dirname){
+struct entry *update_entry(const char *path, const char *dirname) {
+  return update_entry_score(path, dirname, 1);
+}
+
+struct entry *update_entry_score(const char *path, const char *dirname, unsigned long score) {
 //find entry corresponding to dirname, create new entry if it doesn't exist yet.
-  struct entry * current;
-  struct candidate * current_c;
+  struct entry *current;
+  struct candidate *current_c;
   int key=hash(dirname);
-  current=find_entry(dirname,key);
+  current=find_entry(dirname, key);
   if (!current){
     //No such entry yet, create it:
-    current=create_entry(path,dirname);
-    attach(current,key);
+    current=create_entry(path, dirname);
+    current->first_candidate->score = score;
+    attach(current, key);
     return current;
   }
 
-  current_c=find_candidate(path,current);
+  current_c=find_candidate(path, current);
   if(!current_c){
-    push_candidate(current,path);
-  }else{
-    current_c->score++;
-    if(current_c!=current->first_candidate && current_c->score > current_c->prev->score){
-      swap_left(current,current_c);
+    push_candidate(current, path);
+    current->first_candidate->prev->score = score;
+  } else {
+    current_c->score += score;
+    if(current_c != current->first_candidate && current_c->score > current_c->prev->score){
+      swap_left(current, current_c);
     }
   }
+
   return current;
 }
 
