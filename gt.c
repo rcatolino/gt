@@ -1,5 +1,6 @@
-#include <unistd.h>
+#include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -7,9 +8,9 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>
-#include <limits.h>
-#include <errno.h>
+#include <unistd.h>
 
+#undef DEBUG
 #include "gtd.h"
 #include "datalist.h"
 
@@ -61,7 +62,7 @@ int check(const char * opt, const char * path){
   return move(target);
 }
 
-int isrel(const char * path){    
+int isrel(const char * path){
   return (path[0]=='/' || path[0]=='~') ? 0 : 1;
 }
 
@@ -86,10 +87,10 @@ int isdir(const char * path){
 }
 
 int push_event(char event, const char *path, int relative) {
+  char buff[MAX_SIZE+1];
   int sockfd;
   int ret;
-  int size;
-  char buff[MAX_SIZE+1];
+  int length; // length of the string to send not including the terminating null byte.
   struct sockaddr_un server={ .sun_family=AF_UNIX, };
   strcpy(server.sun_path,SOCKET);
 
@@ -102,42 +103,20 @@ int push_event(char event, const char *path, int relative) {
   }
 
   buff[0] = event;
-  size = strlen(path);
-  size = size>MAX_SIZE-1 ? MAX_SIZE-1 : size;
+  length = strlen(path);
+  length = length>MAX_SIZE-1 ? MAX_SIZE-1 : length;
 
   if (event == 's') {
     realpath(path, buff+1);
-    size = strlen(buff);
+    length = strlen(buff);
   } else {
-    size++;
-    memcpy(buff+1, path, size);
+    length++;
+    memcpy(buff+1, path, length);
   }
-    /*
-  if (relative) {
-    char * pwd = getenv("PWD");
-    int pwd_size;
-    if (!pwd) {
-      printd("No curent working directory\n");
-      return;
-    }
-    pwd_size = strlen(pwd);
-    if (pwd_size > (MAX_SIZE-size-1)){
-      printd("absolute path too long\n");
-      return;
-    }
-    memcpy(buff+1,pwd,pwd_size);
-    buff[1+pwd_size]='/';
-    memcpy(buff+2+pwd_size,path,size);
-    size+=1+pwd_size;
-  } else {
-    size++;
-    memcpy(buff+1, path, size);
-  }
-    */
 
   printd("push_event: sending %s\n", buff);
-  printd("buffer len : %lu, sending %d bytes\n",strlen(buff),size+1);
-  ret=send(sockfd, buff, size+1, 0);
+  printd("buffer len : %lu, sending %d bytes\n",strlen(buff),length+1);
+  ret=send(sockfd, buff, length+1, 0);
   if(ret==-1){
     perrord("send");
     return -1;
@@ -180,14 +159,6 @@ int push_event(char event, const char *path, int relative) {
 
 int handle(const char * path){
   if (!path) return 0;
-
-  /*
-  if (!isrel(path)) {
-    printd("pushing store event : %s\n", path);
-    printf("%s", path);
-    return 0;
-  }
-  */
 
   if (isdir(path) == 1) {
     printd("pushing store event : %s\n", path);
