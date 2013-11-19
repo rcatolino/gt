@@ -3,6 +3,7 @@
 #include "gtd.h"
 #include "serial.h"
 #include "datalist.h"
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>
@@ -15,6 +16,51 @@
 #include <sys/stat.h>
 
 static int socklisten;
+
+int escape(char *buffer, uint32_t buffsize, int *strlength) {
+  int strsize;
+  buffer[buffsize-1] = '\0';
+  strsize = strlen(buffer) + 1;
+  char *spaceptr = buffer;
+
+  while ((spaceptr = strpbrk(spaceptr, " \\"))) {
+    strsize++;
+    if (strsize > buffsize) {
+      printd("escape error : buffer too small for %s.\n", buffer);
+      return -1;
+    }
+
+    memmove(spaceptr + 1, spaceptr, buffer + strsize - 1 - spaceptr);
+    spaceptr[0] = '\\';
+    spaceptr += 2;
+  }
+  strsize = strlen(buffer) + 1;
+  if (strlength) {
+    *strlength = strsize - 1;
+  }
+  return 0;
+}
+
+int unescape(char *buffer, uint32_t buffsize) {
+  int strsize;
+  buffer[buffsize-1] = '\0';
+  strsize = strlen(buffer) + 1;
+  char *spaceptr = buffer;
+
+  while ((spaceptr = strpbrk(spaceptr, " \\"))) {
+    strsize++;
+    if (strsize > buffsize) {
+      printd("escape error : buffer too small for %s.\n", buffer);
+      return -1;
+    }
+
+    memmove(spaceptr + 1, spaceptr, buffer + strsize - 1 - spaceptr);
+    spaceptr[0] = '\\';
+    spaceptr += 2;
+  }
+  strsize = strlen(buffer) + 1;
+  return 0;
+}
 
 int store_event(const char * buff){
   char * dirname;
@@ -77,6 +123,10 @@ int read_event(int sockfd){
   buffer[MAX_SIZE]='\0';
   printd("buffer len : %lu\n",strlen(buffer));
   printd("event %c\n",buffer[0]);
+
+  if (escape(buffer, MAX_SIZE+1, NULL) == -1) {
+    return -1;
+  }
 
   if (buffer[0] == 's') {
     //add a dirname-path pair to storage;

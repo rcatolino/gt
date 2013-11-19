@@ -115,15 +115,15 @@ int read_next_entry() {
 
     linenb++;
     printd("length : %lu, value : %s", length, buff);
-    dirname = strtok_r(buff, " ", &saveptr);
+    dirname = strtok_re(buff, "\\ ", &saveptr);
     if (!dirname) {
       printd("Invalid line %d, skipping\n", linenb);
       continue;
     }
 
-    while ((path = strtok_r(NULL, " \n", &saveptr)) != NULL) {
+    while ((path = strtok_re(NULL, "\\ \n", &saveptr)) != NULL && path[0] != '\0') {
       unsigned long scorel = 0;
-      char *score = strtok_r(NULL, " ", &saveptr);
+      char *score = strtok_re(NULL, "\\ \n", &saveptr);
       char *remains;
       if (!score) {
         printd("Error line %d, no score for path '%s'\n", linenb, path);
@@ -132,7 +132,7 @@ int read_next_entry() {
 
       errno = 0;
       scorel = strtoul(score, &remains, 10);
-      if ((remains && remains[0] != '\0') || errno != 0) {
+      if ((remains && remains[0] != '\0' && remains[0] != '\n') || errno != 0) {
         printd("Error line %d, invalid score for path '%s' : %s, %s\n",
                linenb, path, remains, strerror(errno));
         break;

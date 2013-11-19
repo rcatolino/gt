@@ -2,7 +2,7 @@
 #define DATALIST_H_
 
 #define HTABLE_SIZE 53
-#define MAX_SIZE 200
+#define MAX_SIZE 254
 #define DETACHED 1
 #define ATTACHED 0
 
