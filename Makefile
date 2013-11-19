@@ -1,17 +1,24 @@
 #Variables utilisées :
 CC=gcc
 LD=gcc
-CCFLAGS=-Wall -g
-EDLFLAGS=-g
+CCFLAGS=-Wall -O0 -g -std=gnu99
+EDLFLAGS=-g -O0 -std=gnu99
 EXE=gt
+TEST=test
 DAEMON=gtd
 
 OBJ=gt.o
 DOBJ=gtd.o serial.o datalist.o
+TOBJ=datalist.o serial.o test.o
 
 LIBS=
 DLIBS=
 all : $(EXE) $(DAEMON)
+
+$(TEST): $(TOBJ)
+	@echo building $<
+	$(LD) -o $(TEST) $(EDLFLAGS) $(TOBJ)
+	@echo done
 
 $(DAEMON): $(DOBJ)
 	@echo building $<

@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <ctype.h>
 #include <errno.h>
 #include <stdio.h>
@@ -52,6 +53,44 @@ int end_serial() {
   hist = NULL;
 
   return 0;
+}
+
+char *strtok_re(char *str, const char *delim, char **saveptr) {
+  // Just like strtok_r, but using the first char in delim as
+  // an escape character, ie if this character is found in str
+  // the following character will be ignored.
+  char *token = str;
+  char *ptr = str;
+  assert(delim);
+
+  if (!str) {
+    if (!*saveptr) {
+      // We passed the end of the string. No more token.
+      return NULL;
+    }
+    token = *saveptr;
+    ptr = *saveptr;
+  }
+
+  while ((ptr = strpbrk(ptr, delim)) && ptr[0] == delim[0]) {
+    if (delim[0] == '\0') {
+      // Empty delim string
+      *saveptr = ptr;
+      return token;
+    }
+
+    // Ignore the next char :
+    ptr += 2;
+  }
+
+  if (!ptr) {
+    *saveptr = NULL;
+  } else {
+    ptr[0] = '\0';
+    *saveptr = ptr+1;
+  }
+
+  return token;
 }
 
 int read_next_entry() {
