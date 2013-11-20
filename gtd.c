@@ -47,17 +47,12 @@ int unescape(char *buffer, uint32_t buffsize) {
   strsize = strlen(buffer) + 1;
   char *spaceptr = buffer;
 
-  while ((spaceptr = strpbrk(spaceptr, " \\"))) {
-    strsize++;
-    if (strsize > buffsize) {
-      printd("escape error : buffer too small for %s.\n", buffer);
-      return -1;
-    }
-
-    memmove(spaceptr + 1, spaceptr, buffer + strsize - 1 - spaceptr);
-    spaceptr[0] = '\\';
-    spaceptr += 2;
+  while ((spaceptr = strchr(spaceptr, '\\')) &&
+         (spaceptr[1] == '\\' || spaceptr[1] == ' ')) {
+    strsize--;
+    memmove(spaceptr, spaceptr + 1, buffer + strsize - spaceptr);
   }
+
   strsize = strlen(buffer) + 1;
   return 0;
 }
@@ -85,15 +80,15 @@ int store_event(const char * buff){
   return 0;
 }
 
-const char * find_event(const char * buff){
-  struct entry * src;
+const char *find_event(const char *buff){
+  struct entry *src;
   int key=hash(buff);
-  printd("find_event: %s\n",buff);
+  printd("find_event: %s\n", buff);
   src=find_entry(buff, key);
   if (src==NULL){
     return NULL;
   } else {
-    printd("find_event: found path associated with dirname, %s\n",src->first_candidate->path);
+    printd("find_event: found path associated with dirname, %s\n", src->first_candidate->path);
     return src->first_candidate->path;
   }
 }
@@ -139,7 +134,13 @@ int read_event(int sockfd){
       send(sockfd, "\n", 2, 0);
       printd("read_event: no path corresponding to dirname\n");
     } else {
-      if(send(sockfd, path, strlen(path)+1, 0) == -1) {
+      memset(buffer, 0, MAX_SIZE+1);
+      strncpy(buffer, path, MAX_SIZE+1);
+      if (unescape(buffer, MAX_SIZE+1) == -1) {
+        return -1;
+      }
+
+      if(send(sockfd, buffer, strlen(buffer)+1, 0) == -1) {
         perror("send");
         return -1;
       }

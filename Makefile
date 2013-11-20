@@ -54,4 +54,4 @@ install :
 	mkdir /usr/local/share/gtd/
 	cp ./gtd /usr/local/bin/
 	cp ./gt /usr/local/bin/
-	echo "You need to manually add an alias in your .zshrc (or equivalent) parse your cd inputs with gt"
+	@echo "You need to manually add an alias in your .zshrc (or equivalent) to query your cd inputs with gt"
