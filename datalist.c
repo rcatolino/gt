@@ -13,7 +13,11 @@ void dumpTable() {
   init_serial("w");
   for(; i < HTABLE_SIZE; i++) {
     if(htable[i] != NULL) {
-      dump_entry(htable[i]);
+      struct entry *j = htable[i];
+      do {
+        dump_entry(j);
+        j = j->next;
+      } while (j != htable[i]);
     }
   }
   printd("end: removing resources\n");
@@ -49,10 +53,12 @@ int hash(const char * dirname){
 
 void attach(struct entry * new_entry, int key){
   if(htable[key]==NULL){
+    printd("attach entry %s, key %d. No previous entry for this key\n", new_entry->dirname, key);
     new_entry->prev=new_entry;
     new_entry->next=new_entry;
     htable[key]=new_entry;
   }else{
+    printd("attach entry %s, key %d. Existing entry for this key : %s\n", new_entry->dirname, key, htable[key]->dirname);
 //Update new_entry's links:
     new_entry->prev=htable[key]->prev;
     new_entry->next=htable[key];
@@ -72,19 +78,16 @@ void attach(struct entry * new_entry, int key){
 }
 
 struct entry *find_entry(const char *dirname, int key){
-  struct entry *current;
   printd("find_entry %s, key: %d\n",dirname, key);
   if (htable[key] != NULL){
-    current=htable[key];
-    if (strcmp(dirname, current->dirname) == 0){
-      return current;
-    }
-
-    for (; current->next != htable[key]; current = current->next){
-      if(strcmp(dirname, current->dirname) == 0){
+    struct entry *current = htable[key];
+    do {
+      if (strcmp(dirname, current->dirname) == 0) {
         return current;
       }
-    }
+
+      current = current->next;
+    } while (current != htable[key]);
   }
 
   printd("find_entry: no such path\n");

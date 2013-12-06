@@ -6,7 +6,7 @@
 #define DETACHED 1
 #define ATTACHED 0
 
-struct entry{
+struct entry {
   struct entry* prev;
   struct entry* next;
   char dirname[MAX_SIZE];
@@ -14,7 +14,7 @@ struct entry{
   int state;
 };
 
-struct candidate{
+struct candidate {
   struct candidate* prev;
   struct candidate* next;
   char path[MAX_SIZE];
